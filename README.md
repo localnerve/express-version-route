@@ -1,15 +1,11 @@
 # express-version-route
 
-[![view on npm](http://img.shields.io/npm/v/express-version-route.svg)](https://www.npmjs.org/package/express-version-route)
-[![view on npm](http://img.shields.io/npm/l/express-version-route.svg)](https://www.npmjs.org/package/express-version-route)
-[![Build](https://github.com/lirantal/express-version-route/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/lirantal/express-version-route/actions?query=workflow%3ACI)
-[![Codecov](https://img.shields.io/codecov/c/gh/lirantal/express-version-route.svg)](https://codecov.io/gh/lirantal/express-version-route)
-[![npm module downloads](http://img.shields.io/npm/dt/express-version-route.svg)](https://www.npmjs.org/package/express-version-route)
-[![Known Vulnerabilities](https://snyk.io/test/github/lirantal/express-version-route/badge.svg)](https://snyk.io/test/github/lirantal/express-version-route)
-[![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow.svg)](https://github.com/nodejs/security-wg/blob/master/processes/responsible_disclosure_template.md
-)
+> Maintained fork of lirantal/express-version-route
 
-[![express-version-route](https://snyk.io/advisor/npm-package/express-version-route/badge.svg)](https://snyk.io/advisor/npm-package/express-version-route)
+## Why the fork?
+
+* Simplified and updated
+* Dramatically reduced developer tool chain and attack surface
 
 This npm package provides an Express middleware to load route controllers based on api versions.
 
@@ -24,18 +20,18 @@ now any request would be handled with the appropriate route handler in accordanc
 Create a map where the key is the version of the supported controller, and the value is a regular Express route function signature.
 
 ```js
-const versionRouter = require('express-version-route')
+import versionRouter from '@localnerve/express-version-route';
 
-const routesMap = new Map()
+const routesMap = new Map();
 routesMap.set('1.0', (req, res, next) => {
-  return res.status(200).json({'message': 'hello to you version 1.0'})
-})
+  return res.status(200).json({'message': 'hello to you version 1.0'});
+});
 ```
 
 Then, on the route which you wish to version, call the `route` function of this module with the map you created:
 
 ```js
-router.get('/test', versionRouter.route(routesMap))
+router.get('/test', versionRouter.route(routesMap));
 ```
 
 If no route matches the version requested by a client then the next middleware in the chain will be called.
@@ -43,43 +39,50 @@ To set a route fallback incase no version matches set a 'default' key on the rou
 
 ```js
 routesMap.set('default', (req, res, next) => {
-  return res.status(200).json({'message': 'hello to you, this is the default route'})
-})
+  return res.status(200).json({'message': 'hello to you, this is the default route'});
+});
 ``` 
 
 If maximal possible version (for example to get the latest bugfix) is necessary, then please specify `useMaxVersion: true` in `route` function, then the maximal possible version will be returned for your request. For example for `1.0` request, the version `1.0.2` will be returned:
 
 ```js
-const routesMap = new Map()
+const routesMap = new Map();
 routesMap.set('1.0.0', (req, res, next) => {
   return res.status(200).json({'message': 'hello to you version 1.0.0'})
-})
+});
 routesMap.set('1.0.2', (req, res, next) => {
   return res.status(200).json({'message': 'hello to you version 1.0.2'})
-})
+});
 
-router.get('/test', versionRouter.route(routesMap,{useMaxVersion: true}))
+router.get('/test', versionRouter.route(routesMap,{useMaxVersion: true}));
 ```
 
+## No Routes Matched Error
+
+If no routes are matched, the `versionRouter.route` middleware throws a typed error `RouteVersionUnmatchedError`. The error class is exported via a named export:
+
+```js
+import versionRouter, { RouteVersionUnmatchedError } from '@localnerve/express-version-route';
+```
 
 ## Usage with TypeScript
 
 ```ts
-import * as versionRouter from 'express-version-route'
+import versionRouter from '@localnerve/express-version-route'
 import { Router, Handler } from 'express';
 
 const router = Router();
 const routesMap = new Map<string, Handler>();
 
 routesMap.set('1.0', (req, res, next) => {
-  return res.status(200).json({'message': 'hello to you version 1.0'})
+  return res.status(200).json({'message': 'hello to you version 1.0'});
 })
 
 routesMap.set('default', (req, res, next) => {
-  return res.status(200).json({'message': 'hello to you, this is the default route'})
+  return res.status(200).json({'message': 'hello to you, this is the default route'});
 })
 
-router.get('/test', versionRouter.route(routesMap))
+router.get('/test', versionRouter.route(routesMap));
 ```
 
 ## How it works
@@ -87,7 +90,7 @@ router.get('/test', versionRouter.route(routesMap))
 ### The Library
 
 A requested version from the client must be available on the request object at `req.version`.
-You are encouraged to use this module's twin: [express-version-request](https://github.com/lirantal/express-version-request) which is another simple Express middleware that populates `req.version` from the client's X-Api-Version header, Accept header or from a query string (such as 'api-version=1.0.0')
+You are encouraged to use this module's twin: [express-version-request](https://github.com/localnerve/express-version-request) which is another simple Express middleware that populates `req.version` from the client's X-Api-Version header, Accept header, or from a query string (such as 'api-version=1.0.0')
 
 The key for the routes versions you define can be a non-semver format, for example: `1.0` or just `1`. Under the hood, `expression-version-route` uses the `semver` module to check if the version found on the request object at `req.version` matches the route. 
 
@@ -102,46 +105,16 @@ curl --header "X-Api-Version: 1.0.0" https://www.example.com/api/users
 3. The `express-version-route` library, when implemented like the usage example above will match the 1.0 route version because semver will match 1.0.0 to 1.0, and then reply with the JSON payload `{'message': 'hello to you version 1.0'}`.  
 
 
-## Installation
-
-```bash
-yarn add express-version-route
-```
-
-## TypeScript Support
-
-```bash
-yarn add --dev @types/express-version-route
-```
-
-_Note: Don't forget to add types for Express as well!_
-
 ## Tests
 
 ```bash
-yarn test
+npm test
 ```
 
 Project linting:
 
 ```bash
-yarn lint
-```
-
-## Coverage
-
-```bash
-yarn test:coverage
-```
-
-## Commit
-
-The project uses the commitizen tool for standardizing changelog style commit
-messages so you should follow it as so:
-
-```bash
-git add .           # add files to staging
-yarn commit      # use the wizard for the commit message
+npm run lint
 ```
 
 ## On API Versioning...
@@ -171,3 +144,7 @@ Several npm projects exist which provide similar API versioning capabilities to 
 ## Author
 
 Liran Tal <liran.tal@gmail.com>
+
+## Maintainer
+
+Alex Grant <alex@localnerve.com>
