@@ -1,46 +1,57 @@
-'use strict'
+import semver from 'semver';
 
-const semver = require('semver')
-const { RouteVersionUnmatchedError } = require('./errors')
+export class RouteVersionUnmatchedError extends Error {
+  constructor (message, options) {
+    super(message, options);
+    this.name = this.constructor.name;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+}
 
-class versionRouter {
-  static route (versionsMap = new Map(), options = new Map()) {
+export default class VersionRouter {
+  /**
+   * Given a versionMap, create the version route Express middleware.
+   * 
+   * @param {Map} versionsMap - key = version spec string, value = middleware function
+   * @param {Object} [options] - options
+   * @param {Boolean} [options.useMaxVersion] - true to use the maximum version, false otherwise
+   */
+  static route (versionsMap, {
+    useMaxVersion = false
+  } = {}) {
+    const checkVersionMatch = (requestedVersion, routeVersion) =>
+      semver.valid(requestedVersion) && semver.satisfies(requestedVersion, routeVersion);
+
     return (req, res, next) => {
-      var versionArray = []
-      for (let [versionKey, versionRouter] of versionsMap) {
-        versionArray.push(versionKey)
-        if (this.checkVersionMatch(req.version, versionKey)) {
-          return versionRouter(req, res, next)
+      const versionArray = [];
+
+      for (const [versionKey, versionRouter] of versionsMap) {
+        versionArray.push(versionKey);
+        if (checkVersionMatch(req.version, versionKey)) {
+          return versionRouter(req, res, next);
         }
       }
 
-      if (options.useMaxVersion) {
-        const maxVersion = semver.maxSatisfying(versionArray, req.version)
+      if (useMaxVersion) {
+        const maxVersion = semver.maxSatisfying(versionArray, req.version);
+
         if (maxVersion) {
-          for (let [versionKey, versionRouter] of versionsMap) {
-            if (this.checkVersionMatch(maxVersion, versionKey)) {
-              return versionRouter(req, res, next)
+          for (const [versionKey, versionRouter] of versionsMap) {
+            if (checkVersionMatch(maxVersion, versionKey)) {
+              return versionRouter(req, res, next);
             }
           }
         }
       }
 
-      const defaultRoute = this.getDefaultRoute(versionsMap)
+      const defaultRoute = versionsMap.get('default');
       if (defaultRoute) {
-        return defaultRoute(req, res, next)
+        return defaultRoute(req, res, next);
       }
 
-      return next(new RouteVersionUnmatchedError(`${req.version} doesn't match any versions`))
+      return next(new RouteVersionUnmatchedError(`${req.version} doesn't match any versions`));
     }
   }
-
-  static checkVersionMatch (requestedVersion, routeVersion) {
-    return semver.valid(requestedVersion) && semver.satisfies(requestedVersion, routeVersion)
-  }
-
-  static getDefaultRoute (options = new Map()) {
-    return options.get('default')
-  }
 }
-
-module.exports = versionRouter
