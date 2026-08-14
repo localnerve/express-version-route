@@ -9,7 +9,6 @@ node_modules
 # Coverage
 lib-cov
 coverage
-.nyc_output
 
 # IDE
 *.iml
@@ -17,3 +16,5 @@ coverage
 
 # Docs
 docs/
+
+.DS_Store
