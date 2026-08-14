@@ -19,6 +19,16 @@
     "url": "git+https://github.com/localnerve/express-version-route.git"
   },
   "homepage": "https://github.com/localnerve/express-version-route#readme",
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/localnerve"
+    },
+    {
+      "type": "paypal",
+      "url": "https://www.paypal.com/ncp/payment/DHCB5GUYMGX5U"
+    }
+  ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "globals": "17.11.0",
